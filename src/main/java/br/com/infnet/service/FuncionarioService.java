@@ -14,11 +14,10 @@ public class FuncionarioService {
         this.repository = repository;
     }
 
-    // --- Lógica de Validação com Cláusulas de Guarda (Requisito 1) ---
     private void validarFuncionario(String nome, String cargo) {
 
-        // 1. Normaliza as entradas ANTES de qualquer verificação de comprimento ou nulo
-        // Isso impede que espaços em branco ("   ") passem na validação isEmpty
+        // 1. Normaliza as entradas ANTES de qualquer checagem
+        // Este passo é crucial para o teste de fuzzing
         if (nome != null) nome = nome.trim();
         if (cargo != null) cargo = cargo.trim();
 
@@ -32,6 +31,7 @@ public class FuncionarioService {
         }
 
         // 3. Validação de limite de caracteres (Fuzzing)
+        // Se a string tem 51 caracteres, esta exceção DEVE ser disparada.
         if (nome.length() > MAX_LENGTH) {
             throw new IllegalArgumentException("O limite de " + MAX_LENGTH + " caracteres foi excedido para Nome.");
         }
