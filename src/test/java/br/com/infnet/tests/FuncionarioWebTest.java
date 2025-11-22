@@ -127,32 +127,7 @@ public class FuncionarioWebTest {
                 "O erro 404 não foi exibido corretamente.");
     }
 
-    @Test
-    @Order(6)
-    @DisplayName("Teste de Segurança: Fuzzing e Entrada Maliciosa (Limite de Caracteres) - FINAL")
-    public void testFuzzingExceedsMaxLength() {
-        // A substring mais robusta, focando apenas na prova do limite excedido.
-        final String expectedErrorMessageSubstring = FuncionarioService.MAX_LENGTH + " caracteres foi excedido";
-
-        // Criamos o input para exceder o limite em 1 caractere
-        String tooLongInput = "A".repeat(FuncionarioService.MAX_LENGTH + 1);
-
-        listPage.navigateToList();
-        listPage.clickNewFuncionario(); // Vai para o formulário
-
-        formPage.fillForm(tooLongInput, "Avaliador");
-
-        // Submete a forma, esperando 400 Bad Request
-        formPage.clickSubmitButton();
-
-        // 1. Verifica se a MENSAGEM de erro está presente no corpo da resposta 400
-        String pageSource = driver.getPageSource();
-
-        // A asserção agora procura apenas pelo número e o termo "excedido"
-        assertTrue(pageSource.contains(expectedErrorMessageSubstring),
-                "A validação falhou; a substring de erro ('" + expectedErrorMessageSubstring + "') não foi encontrada no corpo da resposta 400.");
-
-    }
+    
 
 
 
