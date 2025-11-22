@@ -46,7 +46,6 @@
             <version>${webdrivermanager.version}</version>
             <scope>test</scope>
         </dependency>
-
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
@@ -108,7 +107,11 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.1.2</version>
                 <configuration>
-                    <argLine>${jacoco.argLine}</argLine>
+                    <argLine>
+                        ${jacoco.argLine}
+                        --add-opens java.base/java.util=ALL-UNNAMED
+                        --add-exports java.base/sun.nio.ch=ALL-UNNAMED
+                    </argLine>
                     <includes>
                         <include>**/*Test.java</include>
                     </includes>
@@ -119,6 +122,9 @@
                 <groupId>org.owasp</groupId>
                 <artifactId>dependency-check-maven</artifactId>
                 <version>9.0.9</version>
+                <configuration>
+                    <failBuildOnCVSS>0</failBuildOnCVSS>
+                </configuration>
                 <executions>
                     <execution>
                         <goals>
@@ -126,6 +132,20 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.3.0</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addClasspath>true</addClasspath>
+                            <mainClass>br.com.infnet.Main</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
             </plugin>
 
         </plugins>

@@ -17,24 +17,24 @@ public class FuncionarioController {
     public FuncionarioController(Javalin app, FuncionarioService service) {
         this.service = service;
 
-        // LISTAGEM
+        // LISTAGEM (GET /funcionarios)
         app.get("/funcionarios", ctx ->
                 ctx.html(FuncionarioView.renderList(this.service.listar()))
         );
 
-        // FORM CREATE
+        // FORM CREATE (GET /funcionarios/new)
         app.get("/funcionarios/new", ctx -> {
             ctx.html(FuncionarioView.renderForm(new HashMap<>()));
         });
 
-        // CREATE
+        // CREATE (POST /funcionarios)
         app.post("/funcionarios", ctx -> {
             String nome = ctx.formParam("nome");
             String cargo = ctx.formParam("cargo");
             double salario = 0.0;
 
             try {
-                // 1. Cria o objeto (imutável) e delega a validação ao Service
+                // 1. Cria objeto e delega validação ao Service
                 Funcionario novoFuncionario = new Funcionario(lastId++, nome, cargo, salario);
                 this.service.addFuncionario(novoFuncionario);
 
@@ -42,13 +42,13 @@ public class FuncionarioController {
                 ctx.redirect("/funcionarios");
 
             } catch (IllegalArgumentException e) {
-                // 3. FALHA DE VALIDAÇÃO: Retorna o status 400 e a mensagem de erro no corpo
+                // 3. FALHA DE VALIDAÇÃO: Retorna 400 e a mensagem no corpo (Coerente)
                 ctx.status(400);
                 ctx.result(e.getMessage());
             }
         });
 
-        // FORM EDIT
+        // FORM EDIT (GET /funcionarios/edit/{id})
         app.get("/funcionarios/edit/{id}", ctx -> {
             int id = ctx.pathParamAsClass("id", Integer.class).get();
             Optional<Funcionario> funcionarioOptional = this.service.findById(id);
@@ -60,6 +60,7 @@ public class FuncionarioController {
                 model.put("id", funcionario.getId());
                 model.put("nome", funcionario.getNome());
                 model.put("cargo", funcionario.getCargo());
+                model.put("salario", funcionario.getSalario());
 
                 ctx.html(FuncionarioView.renderForm(model));
             } else {
@@ -67,7 +68,7 @@ public class FuncionarioController {
             }
         });
 
-        // UPDATE
+        // UPDATE (POST /funcionarios/edit/{id}) - FIX E2E COERÊNCIA
         app.post("/funcionarios/edit/{id}", ctx -> {
             int id = ctx.pathParamAsClass("id", Integer.class).get();
             String nome = ctx.formParam("nome");
@@ -81,17 +82,13 @@ public class FuncionarioController {
                 ctx.redirect("/funcionarios");
 
             } catch (IllegalArgumentException e) {
-                Map<String, Object> model = new HashMap<>();
-                model.put("id", id);
-                model.put("error", e.getMessage());
-                model.put("nome", nome);
-                model.put("cargo", cargo);
-
-                ctx.html(FuncionarioView.renderForm(model));
+                // CORREÇÃO FINAL: Retorna 400 Bad Request com a mensagem no corpo.
+                ctx.status(400);
+                ctx.result(e.getMessage());
             }
         });
 
-        // DELETE
+        // DELETE (POST /funcionarios/delete/{id})
         app.post("/funcionarios/delete/{id}", ctx -> {
             int id = ctx.pathParamAsClass("id", Integer.class).get();
             this.service.deleteFuncionario(id);
