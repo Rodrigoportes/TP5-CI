@@ -9,16 +9,18 @@ on:
   workflow_dispatch:
 
 jobs:
+  # JOB 1: Integração Contínua (Build, Testes Unitários e SAST)
   build-and-test:
     runs-on: ubuntu-latest
     env:
+      # Padroniza a codificação para evitar falhas de string em testes E2E
       LANG: en_US.UTF-8
       LC_ALL: en_US.UTF-8
+
     steps:
       - name: Checkout Code 🛎️
         uses: actions/checkout@v4
 
-      # Configuração do Java 21
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
@@ -26,7 +28,7 @@ jobs:
           java-version: '21'
           cache: 'maven'
 
-      # Configuração manual do Display Virtual (Correção de Xvfb)
+      # Configuração manual do Display Virtual (Necessário para o Selenium E2E)
       - name: Setup Virtual Display (Manual Xvfb) 🖥️
         run: |
           sudo apt-get update
@@ -34,43 +36,67 @@ jobs:
           Xvfb :99 -ac -screen 0 1280x1024x24 &
           echo "DISPLAY=:99" >> $GITHUB_ENV
 
-      # Execução do Build, Testes e SAST
+      # Execução do Build, Testes Unitários e SAST
       - name: Run Maven Build, Tests, and SAST
         run: mvn clean verify org.owasp:dependency-check-maven:check -DskipTests=false
         env:
           DISPLAY: :99
 
-      # Upload do Artefato (JAR) para o Job de Deploy
+      # Upload do Artefato JAR (Necessário para o job de Deploy)
       - name: Upload JAR Artifact 📦
         uses: actions/upload-artifact@v4
         with:
           name: application-jar
           path: target/*.jar
 
-  # JOB 2: CD (Deploy Contínuo)
+  # JOB 2: Deploy Contínuo (CD) e Validação Pós-Deploy
   deploy-to-test:
-    # 1. Dependência: Só roda se o 'build-and-test' passar
+    # Só roda se o job de build for bem-sucedido
     needs: build-and-test
     runs-on: ubuntu-latest
 
-    # 2. Configuração de Ambiente
+    # Configuração de Ambiente
     environment:
       name: test
-      url: https://seuateste.com/funcionarios # URL de exemplo
+      url: http://localhost:7000/funcionarios # URL de validação para o teste pós-deploy
 
     steps:
-      # Download do JAR
+      # 1. Download do Artefato JAR
       - name: Download Build Artifact
         uses: actions/download-artifact@v4
         with:
-          name: application-jar # Referencia o artefato salvo no job anterior
-          path: target/deployment-dir # Baixa para uma pasta para organizar
+          name: application-jar
+          path: target/deployment-dir
 
-      # CRUCIAL: Implementação do Deploy (Simulação)
-      - name: Deploy to Test Environment 🚀
+      # 2. Inicia o Servidor (Deploy Simulado)
+      - name: Start Javalin Server for Post-Deploy Test 🚀
         run: |
           echo "Simulando deploy no ambiente TESTE..."
-          # Lógica de deploy (e-mail, chamada a provedor cloud, etc.)
-          echo "Deploy do artefato concluído para o ambiente de teste."
+          # Encontra o JAR e o executa em background
+          cd target/deployment-dir
+          JAR_FILE=$(find . -name "*.jar")
+          nohup java -jar $JAR_FILE > server.log 2>&1 &
+          
+          echo "Aguardando 10 segundos para o servidor subir..."
+          sleep 10s 
 
-      # [PASSO FUTURO]: Aqui entraria a validação pós-deploy com Selenium!
+      # 3. CRUCIAL: Clonar o código novamente para acessar a classe de teste E2E
+      - name: Checkout Code for Post-Deploy Test
+        uses: actions/checkout@v4
+        with:
+          path: checkout-for-test
+
+      # 4. Configuração do Java e Módulos para o Runner de Teste
+      - name: Setup Java for Test Runner
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      # 5. Execução dos Testes Pós-Deploy contra o servidor ativo
+      - name: Run Selenium Post-Deploy Tests 🧪
+        run: |
+          cd checkout-for-test
+          mvn test -Dtest=br.com.infnet.tests.FuncionarioWebTest
+        env:
+          DISPLAY: :99 # Necessário para o Selenium no runner
