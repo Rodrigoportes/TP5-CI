@@ -34,17 +34,17 @@ public class FuncionarioController {
             double salario = 0.0;
 
             try {
+                // 1. Cria o objeto (imutável) e delega a validação ao Service
                 Funcionario novoFuncionario = new Funcionario(lastId++, nome, cargo, salario);
                 this.service.addFuncionario(novoFuncionario);
+
+                // 2. Sucesso: Redireciona
                 ctx.redirect("/funcionarios");
 
             } catch (IllegalArgumentException e) {
-                Map<String, Object> model = new HashMap<>();
-                model.put("error", e.getMessage());
-                model.put("nome", nome);
-                model.put("cargo", cargo);
-
-                ctx.html(FuncionarioView.renderForm(model));
+                // 3. FALHA DE VALIDAÇÃO: Retorna o status 400 e a mensagem de erro no corpo
+                ctx.status(400);
+                ctx.result(e.getMessage());
             }
         });
 

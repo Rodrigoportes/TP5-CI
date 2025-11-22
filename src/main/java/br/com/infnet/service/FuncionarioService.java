@@ -5,7 +5,6 @@ import br.com.infnet.repository.IRepository;
 import java.util.List;
 import java.util.Optional;
 
-// O Service foca na lógica de negócio e validação.
 public class FuncionarioService {
 
     private static final int MAX_LENGTH = 50;
@@ -18,25 +17,30 @@ public class FuncionarioService {
     // --- Lógica de Validação com Cláusulas de Guarda (Requisito 1) ---
     private void validarFuncionario(String nome, String cargo) {
 
-        // Cláusulas de Guarda: Simplificam a leitura e falham no início (Fail Fast)
-        if (nome == null || nome.trim().isEmpty()) {
+        // Normaliza entradas ANTES de validar
+        if (nome != null) nome = nome.trim();
+        if (cargo != null) cargo = cargo.trim();
+
+        if (nome == null || nome.isEmpty()) {
             throw new IllegalArgumentException("Nome é obrigatório.");
         }
 
-        if (cargo == null || cargo.trim().isEmpty()) {
+        if (cargo == null || cargo.isEmpty()) {
             throw new IllegalArgumentException("Cargo é obrigatório.");
         }
 
-        if (nome.length() > MAX_LENGTH || cargo.length() > MAX_LENGTH) {
-            throw new IllegalArgumentException("O limite de " + MAX_LENGTH + " caracteres foi excedido para Nome ou Cargo.");
+        if (nome.length() > MAX_LENGTH) {
+            throw new IllegalArgumentException("O limite de " + MAX_LENGTH + " caracteres foi excedido para Nome.");
         }
-        // Se todas as guardas passarem, o código continua.
+
+        if (cargo.length() > MAX_LENGTH) {
+            throw new IllegalArgumentException("O limite de " + MAX_LENGTH + " caracteres foi excedido para Cargo.");
+        }
     }
 
     // --- CRUD Operations ---
 
     public void addFuncionario(Funcionario funcionario) {
-        // O Service valida antes de persistir
         validarFuncionario(funcionario.getNome(), funcionario.getCargo());
         repository.cadastrar(funcionario);
     }
@@ -58,4 +62,5 @@ public class FuncionarioService {
         return repository.listar();
     }
 }
+
 
