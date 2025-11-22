@@ -5,6 +5,7 @@ import br.com.infnet.repository.IRepository;
 import java.util.List;
 import java.util.Optional;
 
+// O Service foca na lógica de negócio e validação.
 public class FuncionarioService {
 
     private static final int MAX_LENGTH = 50;
@@ -14,36 +15,28 @@ public class FuncionarioService {
         this.repository = repository;
     }
 
+    // --- Lógica de Validação com Cláusulas de Guarda (Requisito 1) ---
     private void validarFuncionario(String nome, String cargo) {
 
-        // 1. Normaliza as entradas ANTES de qualquer checagem
-        // Este passo é crucial para o teste de fuzzing
-        if (nome != null) nome = nome.trim();
-        if (cargo != null) cargo = cargo.trim();
-
-        // 2. Validação obrigatória (Fail Fast)
-        if (nome == null || nome.isEmpty()) {
+        // Cláusulas de Guarda: Simplificam a leitura e falham no início (Fail Fast)
+        if (nome == null || nome.trim().isEmpty()) {
             throw new IllegalArgumentException("Nome é obrigatório.");
         }
 
-        if (cargo == null || cargo.isEmpty()) {
+        if (cargo == null || cargo.trim().isEmpty()) {
             throw new IllegalArgumentException("Cargo é obrigatório.");
         }
 
-        // 3. Validação de limite de caracteres (Fuzzing)
-        // Se a string tem 51 caracteres, esta exceção DEVE ser disparada.
-        if (nome.length() > MAX_LENGTH) {
-            throw new IllegalArgumentException("O limite de " + MAX_LENGTH + " caracteres foi excedido para Nome.");
+        if (nome.length() > MAX_LENGTH || cargo.length() > MAX_LENGTH) {
+            throw new IllegalArgumentException("O limite de " + MAX_LENGTH + " caracteres foi excedido para Nome ou Cargo.");
         }
-
-        if (cargo.length() > MAX_LENGTH) {
-            throw new IllegalArgumentException("O limite de " + MAX_LENGTH + " caracteres foi excedido para Cargo.");
-        }
+        // Se todas as guardas passarem, o código continua.
     }
 
     // --- CRUD Operations ---
 
     public void addFuncionario(Funcionario funcionario) {
+        // O Service valida antes de persistir
         validarFuncionario(funcionario.getNome(), funcionario.getCargo());
         repository.cadastrar(funcionario);
     }
@@ -65,5 +58,4 @@ public class FuncionarioService {
         return repository.listar();
     }
 }
-
 
