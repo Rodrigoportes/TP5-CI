@@ -17,10 +17,12 @@ public class FuncionarioService {
     // --- Lógica de Validação com Cláusulas de Guarda (Requisito 1) ---
     private void validarFuncionario(String nome, String cargo) {
 
-        // Normaliza entradas ANTES de validar
+        // 1. Normaliza as entradas ANTES de qualquer verificação de comprimento ou nulo
+        // Isso impede que espaços em branco ("   ") passem na validação isEmpty
         if (nome != null) nome = nome.trim();
         if (cargo != null) cargo = cargo.trim();
 
+        // 2. Validação obrigatória (Fail Fast)
         if (nome == null || nome.isEmpty()) {
             throw new IllegalArgumentException("Nome é obrigatório.");
         }
@@ -29,6 +31,7 @@ public class FuncionarioService {
             throw new IllegalArgumentException("Cargo é obrigatório.");
         }
 
+        // 3. Validação de limite de caracteres (Fuzzing)
         if (nome.length() > MAX_LENGTH) {
             throw new IllegalArgumentException("O limite de " + MAX_LENGTH + " caracteres foi excedido para Nome.");
         }
